@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Dashboard | F2C Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-flower1 text-success fs-3"></i> F2C Farmer Portal
+            </a>
+            <div id="nav-auth-container" class="d-flex align-items-center"></div>
+        </div>
+    </nav>
+
+    <!-- Main Grid -->
+    <div class="container py-4">
+        <div class="dashboard-grid">
+            
+            <!-- Sidebar -->
+            <div class="sidebar-panel rounded shadow-sm">
+                <h5 class="fw-bold mb-4 text-success"><i class="bi bi-patch-check-fill me-2"></i>Farmer Panel</h5>
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.html" class="active"><i class="bi bi-graph-up-arrow"></i>Sales Analytics</a></li>
+                    <li><a href="inventory.html"><i class="bi bi-journal-bookmark-fill"></i>Manage Products</a></li>
+                </ul>
+            </div>
+
+            <!-- Content Panel -->
+            <div class="content-panel">
+                <h4 class="fw-bold mb-4">Farmer Analytics Dashboard</h4>
+
+                <!-- Analytics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="card p-3 border-0 bg-success text-white shadow-sm">
+                            <h6 class="text-white-50 small mb-1">Total Revenue Earnings</h6>
+                            <h3 class="fw-bold mb-0" id="farmer-revenue">₹0.00</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card p-3 border-0 bg-warning text-dark shadow-sm">
+                            <h6 class="text-black-50 small mb-1">Total Orders Received</h6>
+                            <h3 class="fw-bold mb-0" id="farmer-orders-count">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Warnings Alert Box -->
+                <div id="stock-alerts-container" class="d-none alert alert-danger p-3 mb-4 rounded-3 border-0">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Stock Level Alerts!</h6>
+                    <ul class="mb-0 small" id="stock-alerts-list">
+                        <!-- Filled by JS -->
+                    </ul>
+                </div>
+
+                <!-- Revenue Analytics Charts Section -->
+                <div class="card p-4 shadow-sm border-color mb-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart-fill text-success me-2"></i>Revenue & Crop Demand Forecast</h5>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Customer Order Moderation Requests -->
+                <div class="card p-4 shadow-sm border-color">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-bag-check-fill text-success me-2"></i>Pending Order Requests</h5>
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr class="text-muted small border-bottom border-color">
+                                    <th>Order ID</th>
+                                    <th>Items Ordered</th>
+                                    <th>Shipping Address</th>
+                                    <th>Total Amount</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="farmer-orders-table">
+                                <!-- Loaded dynamically -->
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No pending orders.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container text-center text-white-50 small">
+            <p class="mb-0">&copy; 2026 F2C – Farmer to Customer Marketplace. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/chatbot.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = getCurrentUser();
+            if (!user || user.role !== "FARMER") {
+                window.location.href = "../login.html";
+                return;
+            }
+
+            loadFarmerDashboard();
+        });
+
+        async function loadFarmerDashboard() {
+            try {
+                const user = getCurrentUser();
+                // 1. Load Farmer Profile (to retrieve revenue)
+                const currentFarmer = await apiFetch("/api/farmer/profile");
+                if (currentFarmer) {
+                    document.getElementById("farmer-revenue").textContent = `₹${currentFarmer.revenue.toFixed(2)}`;
+                }
+
+                // 2. Load Farmer Products (for stock warnings)
+                const products = await apiFetch("/api/farmer/products");
+                const lowStockList = document.getElementById("stock-alerts-list");
+                const alertsBox = document.getElementById("stock-alerts-container");
+                let lowStockCount = 0;
+                
+                lowStockList.innerHTML = "";
+                products.forEach(p => {
+                    if (p.quantity <= 10) {
+                        lowStockCount++;
+                        lowStockList.innerHTML += `<li><strong>${p.name}</strong> is low on stock (${p.quantity} ${p.unit} left). Please replenish inventory.</li>`;
+                    }
+                });
+
+                if (lowStockCount > 0) {
+                    alertsBox.classList.remove("d-none");
+                } else {
+                    alertsBox.classList.add("d-none");
+                }
+
+                // 3. Load Farmer Orders
+                const orders = await apiFetch("/api/orders/farmer");
+                document.getElementById("farmer-orders-count").textContent = orders.length;
+
+                const tableBody = document.getElementById("farmer-orders-table");
+                if (orders.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No order requests yet.</td></tr>`;
+                    return;
+                }
+
+                tableBody.innerHTML = "";
+                orders.forEach(order => {
+                    let itemsString = "";
+                    order.items.forEach(item => {
+                        // Only show items belonging to this farmer
+                        if (item.product.farmer.id === user.id) {
+                            itemsString += `<div>${item.product.name} (x${item.quantity} ${item.product.unit})</div>`;
+                        }
+                    });
+
+                    // Build dropdown select to update order status
+                    const statusOptions = ["PLACED", "ACCEPTED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"];
+                    let selectHtml = `<select class="form-select form-select-sm" onchange="updateStatus(${order.id}, this.value)" style="width: 140px; padding: 4px 8px;">`;
+                    statusOptions.forEach(opt => {
+                        const selected = opt.equalsIgnoreCase(order.status) ? 'selected' : '';
+                        selectHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                    selectHtml += "</select>";
+
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="align-middle">#${order.id}</td>
+                            <td class="align-middle small">${itemsString}</td>
+                            <td class="align-middle small">${order.shippingAddress}</td>
+                            <td class="align-middle fw-bold text-success">₹${order.totalAmount}</td>
+                            <td class="align-middle"><span class="badge bg-success-subtle text-success">${order.status}</span></td>
+                            <td class="align-middle">${selectHtml}</td>
+                        </tr>
+                    `;
+                });
+
+                // Render Chart
+                renderChart(products);
+
+            } catch (e) {
+                console.error("Dashboard error:", e);
+            }
+        }
+
+        // Helper string comparison
+        String.prototype.equalsIgnoreCase = function (compareString) {
+            return this.toLowerCase() === compareString.toLowerCase();
+        };
+
+        async function updateStatus(orderId, newStatus) {
+            try {
+                await apiFetch(`/api/orders/update-status/${orderId}?status=${newStatus}`, {
+                    method: "PUT"
+                });
+                alert(`Order #${orderId} status updated to ${newStatus}`);
+                loadFarmerDashboard();
+            } catch (e) {
+                alert(e.message || "Failed to update order status.");
+            }
+        }
+
+        // Draw analytics chart using Chart.js
+        function renderChart(products) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            // Labels are crop names, datasets are stock levels
+            const labels = products.map(p => p.name);
+            const stocks = products.map(p => p.quantity);
+            const prices = products.map(p => p.price);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Inventory Stock Level',
+                        data: stocks,
+                        backgroundColor: 'rgba(46, 125, 50, 0.6)',
+                        borderColor: '#2e7d32',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Unit Price (₹)',
+                        data: prices,
+                        type: 'line',
+                        backgroundColor: 'rgba(255, 145, 0, 0.2)',
+                        borderColor: '#ff9100',
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Quantity Stock Level'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Price (₹)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

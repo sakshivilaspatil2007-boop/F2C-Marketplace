@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order | F2C Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-flower1 text-success fs-3"></i> F2C Marketplace
+            </a>
+            <div id="nav-auth-container" class="d-flex align-items-center"></div>
+        </div>
+    </nav>
+
+    <!-- Tracking Section -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card p-4 shadow-sm border-color mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap border-bottom pb-3 border-color">
+                        <div>
+                            <h4 class="fw-bold mb-1" id="order-tracking-title">Tracking Order #...</h4>
+                            <p class="text-muted mb-0 small">Payment Mode: <span class="fw-bold text-dark" id="payment-mode">COD</span></p>
+                        </div>
+                        <div class="text-lg-end mt-2 mt-lg-0">
+                            <span class="badge bg-success-subtle text-success px-3 py-2 fs-6 rounded-pill" id="order-status-badge">PLACED</span>
+                        </div>
+                    </div>
+
+                    <!-- Zomato Style Stepper Progress Bar -->
+                    <div class="tracking-stepper">
+                        <div class="stepper-progress" id="stepper-progress" style="width: 0%;"></div>
+                        
+                        <div class="step-item" id="step-placed">
+                            <div class="step-icon"><i class="bi bi-receipt"></i></div>
+                            <div class="step-title">Placed</div>
+                        </div>
+                        <div class="step-item" id="step-accepted">
+                            <div class="step-icon"><i class="bi bi-check-circle"></i></div>
+                            <div class="step-title">Accepted</div>
+                        </div>
+                        <div class="step-item" id="step-processing">
+                            <div class="step-icon"><i class="bi bi-egg-fried"></i></div>
+                            <div class="step-title">Preparing</div>
+                        </div>
+                        <div class="step-item" id="step-shipped">
+                            <div class="step-icon"><i class="bi bi-box-seam"></i></div>
+                            <div class="step-title">Shipped</div>
+                        </div>
+                        <div class="step-item" id="step-out">
+                            <div class="step-icon"><i class="bi bi-bicycle"></i></div>
+                            <div class="step-title">In Transit</div>
+                        </div>
+                        <div class="step-item" id="step-delivered">
+                            <div class="step-icon"><i class="bi bi-house-heart"></i></div>
+                            <div class="step-title">Delivered</div>
+                        </div>
+                    </div>
+
+                    <!-- Live estimated time -->
+                    <div class="alert bg-success-subtle border-0 p-3 text-center mb-4 rounded-3 text-success">
+                        <i class="bi bi-clock-history me-2 fs-5"></i>Estimated Delivery Time: <strong id="estimated-time">Calculating...</strong>
+                    </div>
+
+                    <!-- Dynamic Canvas Route Track Animation (Wows the user) -->
+                    <div class="row align-items-center">
+                        <div class="col-md-7 mb-4 mb-md-0 text-center">
+                            <h6 class="fw-bold mb-3 text-muted"><i class="bi bi-compass-fill me-2"></i>Live Delivery Map</h6>
+                            <canvas id="tracking-canvas" width="500" height="300" class="border rounded bg-light shadow-sm w-100" style="max-width: 500px; height: 300px;"></canvas>
+                        </div>
+                        <div class="col-md-5">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-person-badge-fill text-success me-2"></i>Delivery Agent</h5>
+                            <div class="card p-3 border-color flex-row gap-3 align-items-center">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Amit Kumar</h6>
+                                    <p class="text-muted small mb-1"><i class="bi bi-star-fill text-warning me-1"></i>4.9 Rating</p>
+                                    <span class="badge bg-success-subtle text-success px-2 py-1 fs-7">Verified Driver</span>
+                                </div>
+                            </div>
+                            
+                            <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-geo-alt-fill text-success me-2"></i>Shipment Address</h5>
+                            <p class="text-muted small" id="ship-address">Loading shipping destination...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container text-center text-white-50 small">
+            <p class="mb-0">&copy; 2026 F2C – Farmer to Customer Marketplace. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/chatbot.js"></script>
+    
+    <script>
+        let orderId = null;
+        let trackingInterval = null;
+        let currentStatus = "PLACED";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            orderId = urlParams.get("orderId");
+            if (!orderId) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            document.getElementById("order-tracking-title").textContent = `Tracking Order #${orderId}`;
+            fetchTrackingDetails();
+            
+            // Poll for updates every 10 seconds (standard live tracking simulation)
+            trackingInterval = setInterval(fetchTrackingDetails, 10000);
+
+            // Start Canvas animation
+            initCanvasAnimation();
+        });
+
+        async function fetchTrackingDetails() {
+            try {
+                // Fetch Order Details
+                const order = await apiFetch(`/api/orders/details/${orderId}`);
+                document.getElementById("payment-mode").textContent = order.paymentMethod + ` (${order.paymentStatus})`;
+                document.getElementById("ship-address").textContent = order.shippingAddress;
+
+                // Fetch Tracking Details
+                const tracking = await apiFetch(`/api/orders/tracking/${orderId}`);
+                currentStatus = tracking.status;
+                document.getElementById("order-status-badge").textContent = tracking.status;
+                document.getElementById("estimated-time").textContent = tracking.estimatedDeliveryTime;
+
+                updateStepper(tracking.status);
+
+            } catch (e) {
+                console.error("Tracking fetch error:", e);
+            }
+        }
+
+        function updateStepper(status) {
+            const steps = ["PLACED", "ACCEPTED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"];
+            const index = steps.indexOf(status.toUpperCase());
+            
+            const stepperProgress = document.getElementById("stepper-progress");
+            // Set progress bar width
+            const pct = (index / (steps.length - 1)) * 100;
+            stepperProgress.style.width = `${pct}%`;
+
+            // Style individual steps
+            steps.forEach((stepName, idx) => {
+                const stepEl = document.getElementById(`step-${getStepIdSuffix(stepName)}`);
+                if (!stepEl) return;
+                
+                stepEl.classList.remove("active", "completed");
+                if (idx < index) {
+                    stepEl.classList.add("completed");
+                } else if (idx === index) {
+                    stepEl.classList.add("active");
+                }
+            });
+
+            if (status.toUpperCase() === "DELIVERED") {
+                clearInterval(trackingInterval);
+            }
+        }
+
+        function getStepIdSuffix(stepName) {
+            if (stepName === "PLACED") return "placed";
+            if (stepName === "ACCEPTED") return "accepted";
+            if (stepName === "PROCESSING") return "processing";
+            if (stepName === "SHIPPED") return "shipped";
+            if (stepName === "OUT_FOR_DELIVERY") return "out";
+            if (stepName === "DELIVERED") return "delivered";
+            return "";
+        }
+
+        // Canvas animation trace logic
+        function initCanvasAnimation() {
+            const canvas = document.getElementById("tracking-canvas");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+
+            // Coordinates for route path (Bezier curve)
+            const farm = { x: 50, y: 220, label: "🌿 Farm" };
+            const customer = { x: 430, y: 80, label: "🏠 Home" };
+            let driverPct = 0.0;
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid lines
+                ctx.strokeStyle = "rgba(46, 125, 50, 0.05)";
+                ctx.lineWidth = 1;
+                for (let i = 0; i < canvas.width; i += 30) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i, canvas.height);
+                    ctx.stroke();
+                }
+                for (let i = 0; i < canvas.height; i += 30) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(canvas.width, i);
+                    ctx.stroke();
+                }
+
+                // Draw curve representing delivery route
+                ctx.beginPath();
+                ctx.moveTo(farm.x, farm.y);
+                ctx.bezierCurveTo(150, 50, 300, 250, customer.x, customer.y);
+                ctx.strokeStyle = "#cbd5e1";
+                ctx.lineWidth = 6;
+                ctx.stroke();
+
+                // Set driver percent based on status
+                const statuses = ["PLACED", "ACCEPTED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"];
+                const targetIdx = statuses.indexOf(currentStatus.toUpperCase());
+                let targetPct = 0;
+                if (targetIdx === 0) targetPct = 0.05;
+                else if (targetIdx === 1) targetPct = 0.20;
+                else if (targetIdx === 2) targetPct = 0.40;
+                else if (targetIdx === 3) targetPct = 0.65;
+                else if (targetIdx === 4) targetPct = 0.85;
+                else if (targetIdx === 5) targetPct = 1.0;
+
+                // Smoothly slide driver
+                if (driverPct < targetPct) driverPct += 0.005;
+                if (driverPct > targetPct) driverPct -= 0.005;
+
+                // Find point along bezier curve
+                const t = driverPct;
+                const cp1 = { x: 150, y: 50 };
+                const cp2 = { x: 300, y: 250 };
+                
+                // Cubic Bezier formula
+                const driverX = Math.pow(1-t, 3)*farm.x + 3*Math.pow(1-t, 2)*t*cp1.x + 3*(1-t)*Math.pow(t, 2)*cp2.x + Math.pow(t, 3)*customer.x;
+                const driverY = Math.pow(1-t, 3)*farm.y + 3*Math.pow(1-t, 2)*t*cp1.y + 3*(1-t)*Math.pow(t, 2)*cp2.y + Math.pow(t, 3)*customer.y;
+
+                // Draw completed route path
+                ctx.beginPath();
+                ctx.moveTo(farm.x, farm.y);
+                // Draw sub-curve for completed path
+                for (let i = 0; i <= driverPct; i += 0.01) {
+                    let tx = Math.pow(1-i, 3)*farm.x + 3*Math.pow(1-i, 2)*i*cp1.x + 3*(1-i)*Math.pow(i, 2)*cp2.x + Math.pow(i, 3)*customer.x;
+                    let ty = Math.pow(1-i, 3)*farm.y + 3*Math.pow(1-i, 2)*i*cp1.y + 3*(1-i)*Math.pow(i, 2)*cp2.y + Math.pow(i, 3)*customer.y;
+                    ctx.lineTo(tx, ty);
+                }
+                ctx.strokeStyle = "#2e7d32";
+                ctx.lineWidth = 6;
+                ctx.stroke();
+
+                // Draw Farm Pin
+                ctx.fillStyle = "#1b5e20";
+                ctx.beginPath();
+                ctx.arc(farm.x, farm.y, 8, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.fillStyle = "var(--text-color)";
+                ctx.font = "bold 12px sans-serif";
+                ctx.fillText(farm.label, farm.x - 20, farm.y + 22);
+
+                // Draw Customer Pin
+                ctx.fillStyle = "#0284c7";
+                ctx.beginPath();
+                ctx.arc(customer.x, customer.y, 8, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.fillStyle = "var(--text-color)";
+                ctx.fillText(customer.label, customer.x - 20, customer.y - 15);
+
+                // Draw Driver (Bicycle icon representation or circle)
+                ctx.fillStyle = "#ff9100";
+                ctx.beginPath();
+                ctx.arc(driverX, driverY, 12, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Small arrow inside driver
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc(driverX, driverY, 4, 0, 2*Math.PI);
+                ctx.fill();
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>

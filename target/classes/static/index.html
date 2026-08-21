@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Fresh organic products delivered direct from local farmers to your doorstep. Buy fresh vegetables, fruits, dairy, and grains online.">
+    <title>F2C – Farmer to Customer Marketplace | Fresh From Farm To Your Doorstep</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/style.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-flower1 text-success fs-3"></i> F2C Marketplace
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-4">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="shop.html">Shop Produce</a></li>
+                    <li class="nav-item"><a class="nav-link" href="shop.html?category=1">Vegetables</a></li>
+                    <li class="nav-item"><a class="nav-link" href="shop.html?category=2">Fruits</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Theme Toggle -->
+                    <button class="btn btn-link theme-toggle p-2 text-decoration-none" id="theme-toggle-btn" aria-label="Toggle Dark Mode">
+                        <i class="bi bi-moon-fill text-secondary"></i>
+                    </button>
+                    <!-- Authentication Section (Filled Dynamically by app.js) -->
+                    <div id="nav-auth-container" class="d-flex align-items-center">
+                        <a href="login.html" class="btn btn-outline-success rounded-pill px-4">Sign In</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Amazon-style Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 text-center text-lg-start">
+                    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold mb-3">100% Organic & Farm Fresh</span>
+                    <h1 class="display-4 fw-extrabold mb-3" style="line-height: 1.2;">Fresh From Farm <br><span class="text-success">To Your Doorstep</span></h1>
+                    <p class="lead text-muted mb-4">Direct marketplace connecting hardworking local farmers with families who love nutritious, natural food. Skip the middlemen!</p>
+                    <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
+                        <a href="shop.html" class="btn btn-primary btn-lg rounded-pill px-4 py-3"><i class="bi bi-bag-fill me-2"></i>Shop Fresh Produce</a>
+                        <a href="register.html" class="btn btn-outline-dark btn-lg rounded-pill px-4 py-3"><i class="bi bi-person-plus-fill me-2"></i>Join as Farmer</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center mt-5 mt-lg-0">
+                    <img src="https://images.unsplash.com/photo-1595855759920-86582396756a?w=600&auto=format&fit=crop&q=60" class="hero-image rounded-4 img-fluid shadow-lg" alt="Fresh Harvest Tomatoes" style="max-height: 400px; object-fit: cover;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Row -->
+    <section class="py-5 bg-white border-bottom border-color">
+        <div class="container">
+            <h3 class="text-center mb-4 fw-bold">Browse categories</h3>
+            <div class="row justify-content-center gap-4 text-center mt-3">
+                <div class="col-md-2 col-sm-4 col-6">
+                    <a href="shop.html?category=1" class="category-circle-card">
+                        <img src="https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=150" class="category-circle-img" alt="Vegetables">
+                        <h6 class="mt-2 fw-semibold text-dark">Vegetables</h6>
+                    </a>
+                </div>
+                <div class="col-md-2 col-sm-4 col-6">
+                    <a href="shop.html?category=2" class="category-circle-card">
+                        <img src="https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=150" class="category-circle-img" alt="Fruits">
+                        <h6 class="mt-2 fw-semibold text-dark">Fruits</h6>
+                    </a>
+                </div>
+                <div class="col-md-2 col-sm-4 col-6">
+                    <a href="shop.html?category=3" class="category-circle-card">
+                        <img src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=150" class="category-circle-img" alt="Grains">
+                        <h6 class="mt-2 fw-semibold text-dark">Grains & Pulses</h6>
+                    </a>
+                </div>
+                <div class="col-md-2 col-sm-4 col-6">
+                    <a href="shop.html?category=4" class="category-circle-card">
+                        <img src="https://images.unsplash.com/photo-1563636619-e9143da7973b?w=150" class="category-circle-img" alt="Dairy">
+                        <h6 class="mt-2 fw-semibold text-dark">Dairy & Eggs</h6>
+                    </a>
+                </div>
+                <div class="col-md-2 col-sm-4 col-6">
+                    <a href="shop.html?category=5" class="category-circle-card">
+                        <img src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=150" class="category-circle-img" alt="Herbs">
+                        <h6 class="mt-2 fw-semibold text-dark">Herbs & Spices</h6>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Flash Sales / Recommendations Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold mb-0">Recommended fresh picks</h3>
+                <a href="shop.html" class="btn btn-outline-success rounded-pill px-4 btn-sm">View All</a>
+            </div>
+            
+            <div id="home-recommendations-grid" class="row">
+                <!-- Loaded via JS -->
+                <div class="col-12 text-center py-4">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seasonal Banner -->
+    <section class="py-5 bg-success text-white my-3" style="background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);">
+        <div class="container">
+            <div class="row align-items-center text-center text-md-start">
+                <div class="col-md-8">
+                    <h2 class="fw-bold mb-2">Summer Harvest special offers!</h2>
+                    <p class="mb-md-0">Get up to 20% discount on fresh bulk orders of sweet apples, onions, and raw pure milk straight from local Sonipat and Gujarat orchards.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-4 mt-md-0">
+                    <a href="shop.html" class="btn btn-warning btn-lg rounded-pill px-5 fw-bold text-dark shadow">Shop Sale Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Farmers Section -->
+    <section class="py-5 bg-white border-top border-bottom border-color">
+        <div class="container">
+            <h3 class="fw-bold text-center mb-5">Meet our featured farmers</h3>
+            <div class="row justify-content-center gap-5 mt-4">
+                <div class="col-md-5 card p-4 flex-row gap-3 align-items-center border-color">
+                    <img src="https://images.unsplash.com/photo-1595855759920-86582396756a?w=150" class="rounded-circle object-fit-cover shadow" style="width: 100px; height: 100px;" alt="Farmer Ramesh">
+                    <div>
+                        <h5 class="mb-1 text-success">Ramesh Kumar</h5>
+                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt-fill"></i> Green Fields Farm, Haryana</p>
+                        <p class="small mb-0">"Grows premium organic tomatoes and potatoes with certified compost. Cultivating health for families since 2012."</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-5 card p-4 flex-row gap-3 align-items-center border-color">
+                    <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c?w=150" class="rounded-circle object-fit-cover shadow" style="width: 100px; height: 100px;" alt="Farmer Suresh">
+                    <div>
+                        <h5 class="mb-1 text-success">Suresh Patel</h5>
+                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt-fill"></i> Saraswati Valley, Gujarat</p>
+                        <p class="small mb-0">"Offers fresh dairy milk bottles and aged long-grain Basmati Rice directly harvested from the fertile soils of Anand."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5 class="fw-bold text-success"><i class="bi bi-flower1"></i> F2C Marketplace</h5>
+                    <p class="text-muted small mt-3">Connecting local agriculture directly with city households to deliver maximum quality and value, while empowering farmer livelihoods.</p>
+                </div>
+                <div class="col-md-2 mb-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="shop.html">Shop Online</a></li>
+                        <li><a href="register.html">Farmer Registration</a></li>
+                        <li><a href="login.html">Sign In</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5>Customer Service</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="customer/dashboard.html">My Orders</a></li>
+                        <li><a href="customer/dashboard.html#complaints">Submit Complaint</a></li>
+                        <li><a href="#">FAQs</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <h5>Contact Info</h5>
+                    <p class="small mb-1"><i class="bi bi-telephone me-2"></i> +91 98765 43210</p>
+                    <p class="small mb-1"><i class="bi bi-envelope me-2"></i> support@f2c.com</p>
+                    <p class="small"><i class="bi bi-geo-alt me-2"></i> New Delhi, India</p>
+                </div>
+            </div>
+            <div class="border-top pt-4 mt-4 text-center text-white-50 small border-secondary">
+                <p class="mb-0">&copy; 2026 F2C – Farmer to Customer Marketplace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Utility Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/chatbot.js"></script>
+    <!-- Page script to load recommendations -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const grid = document.getElementById("home-recommendations-grid");
+            if (!grid) return;
+            try {
+                // Fetch recommendations from API (allows public fallback)
+                const products = await apiFetch("/api/ai/recommendations");
+                grid.innerHTML = "";
+                products.slice(0, 4).forEach(p => {
+                    grid.innerHTML += `
+                        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                            <div class="card h-100">
+                                <div class="product-img-wrapper">
+                                    <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=300'}" class="product-img" alt="${p.name}">
+                                </div>
+                                <div class="card-body d-flex flex-column justify-content-between p-3">
+                                    <div>
+                                        <span class="text-muted small">${p.category.name}</span>
+                                        <h6 class="card-title my-1 text-truncate">${p.name}</h6>
+                                        <div class="small text-success mb-2">
+                                            <i class="bi bi-geo-alt-fill me-1"></i> ${p.farmer.address.split(",")[0]}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fs-6 fw-bold text-success">₹${p.price} / ${p.unit}</span>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a href="product.html?id=${p.id}" class="btn btn-outline-success btn-sm w-100">Details</a>
+                                            <button onclick="quickAddToCart(${p.id}, 1)" class="btn btn-success btn-sm w-100" ${p.quantity === 0 ? 'disabled' : ''}>
+                                                <i class="bi bi-cart-plus"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                grid.innerHTML = `<div class="alert alert-warning text-center col-12">Login to see personalized AI suggestions! Or browse <a href="shop.html">Shop catalog</a>.</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

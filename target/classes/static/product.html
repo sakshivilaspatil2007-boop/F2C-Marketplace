@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View details of organic crops, pricing per unit, farm source location, and community reviews.">
+    <title>Product Details | F2C Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-flower1 text-success fs-3"></i> F2C Marketplace
+            </a>
+            <div id="nav-auth-container" class="d-flex align-items-center"></div>
+        </div>
+    </nav>
+
+    <!-- Product Details Content -->
+    <div class="container py-5">
+        <div id="product-details-container" class="row">
+            <!-- Loaded via JS -->
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="row mt-5">
+            <div class="col-lg-8">
+                <h4 class="fw-bold mb-4">Customer Reviews</h4>
+                <div id="reviews-list-container">
+                    <!-- Reviews loaded via JS -->
+                </div>
+
+                <!-- Add Review Box -->
+                <div class="card p-4 mt-4 shadow-sm border-color" id="add-review-card" style="display:none;">
+                    <h5 class="fw-bold mb-3">Add Your Review</h5>
+                    <form id="review-form">
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <select class="form-select" id="review-rating" required>
+                                <option value="5">5 Stars - Excellent</option>
+                                <option value="4">4 Stars - Very Good</option>
+                                <option value="3">3 Stars - Good</option>
+                                <option value="2">2 Stars - Fair</option>
+                                <option value="1">1 Star - Poor</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Review Comment</label>
+                            <textarea class="form-control" id="review-comment" rows="3" placeholder="Tell us about the freshness, size, and taste..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Submit Review</button>
+                    </form>
+                    <div class="alert alert-success mt-3 d-none" id="review-alert"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5">
+        <div class="container text-center text-white-50 small">
+            <p class="mb-0">&copy; 2026 F2C – Farmer to Customer Marketplace. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/chatbot.js"></script>
+    
+    <script>
+        let currentProductId = null;
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentProductId = urlParams.get("id");
+            if (!currentProductId) {
+                window.location.href = "shop.html";
+                return;
+            }
+
+            await loadProductDetails();
+            await loadReviews();
+            
+            // Show review form only if customer is logged in
+            const user = getCurrentUser();
+            if (user && user.role === "CUSTOMER") {
+                document.getElementById("add-review-card").style.display = "block";
+            }
+            
+            document.getElementById("review-form")?.addEventListener("submit", submitReview);
+        });
+
+        async function loadProductDetails() {
+            const container = document.getElementById("product-details-container");
+            try {
+                const p = await apiFetch(`/api/products/details/${currentProductId}`);
+                container.innerHTML = `
+                    <div class="col-md-6 mb-4">
+                        <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=600'}" class="img-fluid rounded shadow-sm object-fit-cover w-100" style="max-height: 400px;" alt="${p.name}">
+                    </div>
+                    <div class="col-md-6">
+                        <span class="badge bg-success-subtle text-success mb-2 px-3 py-2 fs-6">${p.category.name}</span>
+                        <h1 class="fw-bold mb-2">${p.name}</h1>
+                        <p class="text-success fs-3 fw-bold mb-3">₹${p.price} <span class="fs-6 fw-normal text-muted">/ ${p.unit}</span></p>
+                        
+                        <div class="card p-3 bg-light border-0 mb-4 rounded-3">
+                            <h6 class="fw-bold"><i class="bi bi-geo-alt-fill text-success me-1"></i>Farm Origin</h6>
+                            <p class="mb-1 fw-semibold text-dark">${p.farmer.name}</p>
+                            <p class="text-muted small mb-0">${p.farmer.address}</p>
+                        </div>
+
+                        <h5 class="fw-bold mb-2">Description</h5>
+                        <p class="text-muted mb-4">${p.description || 'No detailed description available.'}</p>
+                        
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div style="width: 120px;">
+                                <input type="number" id="qty-input" class="form-control" value="1" min="1" max="${p.quantity}">
+                            </div>
+                            <button onclick="addToCartFromDetails()" class="btn btn-success px-4 rounded-pill" ${p.quantity === 0 ? 'disabled' : ''}>
+                                <i class="bi bi-cart-plus me-2"></i> Add to Cart
+                            </button>
+                            <button onclick="addToWishlistFromDetails()" class="btn btn-outline-danger px-4 rounded-pill">
+                                <i class="bi bi-heart-fill me-1"></i> Wishlist
+                            </button>
+                            <span class="badge ${p.quantity > 5 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'} px-3 py-2">
+                                ${p.quantity > 0 ? `${p.quantity} ${p.unit} Available` : 'Out of stock'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML = `<div class="alert alert-danger">Failed to load product details: ${e.message}</div>`;
+            }
+        }
+
+        async function loadReviews() {
+            const list = document.getElementById("reviews-list-container");
+            try {
+                const reviews = await apiFetch(`/api/reviews/product/${currentProductId}`);
+                if (reviews.length === 0) {
+                    list.innerHTML = `<p class="text-muted italic">No reviews yet for this product. Be the first to share your thoughts!</p>`;
+                    return;
+                }
+                list.innerHTML = "";
+                reviews.forEach(r => {
+                    let ratingStars = "";
+                    for (let i = 1; i <= 5; i++) {
+                        ratingStars += i <= r.rating ? '<i class="bi bi-star-fill text-warning"></i>' : '<i class="bi bi-star text-muted"></i>';
+                    }
+                    list.innerHTML += `
+                        <div class="card p-3 mb-3 border-color">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6 class="fw-bold mb-0">${r.user.name}</h6>
+                                <small class="text-muted">${new Date(r.reviewDate).toLocaleDateString()}</small>
+                            </div>
+                            <div class="mb-2">${ratingStars}</div>
+                            <p class="mb-0 text-muted small">${r.comment}</p>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                list.innerHTML = `<div class="text-danger small">Failed to load reviews.</div>`;
+            }
+        }
+
+        async function addToCartFromDetails() {
+            const qty = parseFloat(document.getElementById("qty-input").value);
+            await quickAddToCart(currentProductId, qty);
+        }
+
+        async function addToWishlistFromDetails() {
+            const user = getCurrentUser();
+            if (!user) {
+                alert("Please log in to add items to your wishlist.");
+                window.location.href = "login.html";
+                return;
+            }
+            if (user.role !== "CUSTOMER") {
+                alert("Only customers can add items to their wishlist.");
+                return;
+            }
+            try {
+                await apiFetch(`/api/wishlist/add?productId=${currentProductId}`, {
+                    method: "POST"
+                });
+                alert("Product added to wishlist successfully!");
+            } catch (e) {
+                alert(e.message || "Failed to add product to wishlist.");
+            }
+        }
+
+        async function submitReview(e) {
+            e.preventDefault();
+            const rating = document.getElementById("review-rating").value;
+            const comment = document.getElementById("review-comment").value;
+            const alertBox = document.getElementById("review-alert");
+
+            try {
+                await apiFetch(`/api/reviews/add?productId=${currentProductId}&rating=${rating}&comment=${encodeURIComponent(comment)}`, {
+                    method: "POST"
+                });
+                alertBox.className = "alert alert-success mt-3";
+                alertBox.textContent = "Review submitted successfully!";
+                alertBox.classList.remove("d-none");
+                document.getElementById("review-form").reset();
+                setTimeout(async () => {
+                    alertBox.classList.add("d-none");
+                    await loadReviews();
+                }, 2000);
+            } catch (err) {
+                alertBox.className = "alert alert-danger mt-3";
+                alertBox.textContent = err.message || "Failed to submit review.";
+                alertBox.classList.remove("d-none");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | F2C Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="d-flex align-items-center justify-content-center py-5" style="min-height: 100vh; background-color: var(--bg-color);">
+
+    <div class="card p-4 shadow-lg border-color" style="max-width: 500px; width: 100%; border-radius: 20px; background-color: var(--card-bg);">
+        <div class="text-center mb-4">
+            <a href="index.html" class="fs-3 fw-bold text-success text-decoration-none">
+                <i class="bi bi-flower1"></i> F2C Marketplace
+            </a>
+            <h5 class="mt-3 mb-1 fw-bold">Create Account</h5>
+            <p class="text-muted small">Register to buy or sell fresh farm food</p>
+        </div>
+
+        <form id="register-form">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Full Name</label>
+                <input type="text" class="form-control" id="register-name" placeholder="Ramesh Kumar" required style="padding: 10px 14px;">
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Email Address</label>
+                    <input type="email" class="form-control" id="register-email" placeholder="ramesh@domain.com" required style="padding: 10px 14px;">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    <input type="password" class="form-control" id="register-password" placeholder="••••••••" required style="padding: 10px 14px;">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Phone Number</label>
+                    <input type="text" class="form-control" id="register-phone" placeholder="+919876543210" required style="padding: 10px 14px;">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">I want to Register as</label>
+                    <select class="form-select" id="register-role" required style="padding: 10px 14px;">
+                        <option value="CUSTOMER">Customer (Buy Food)</option>
+                        <option value="FARMER">Farmer (Sell Food)</option>
+                        <option value="ADMIN">Administrator (Manage Portal)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Billing/Delivery Address</label>
+                <input type="text" class="form-control" id="register-address" placeholder="Apt, Street, City, State" required style="padding: 10px 14px;">
+            </div>
+
+            <!-- Farmer specific fields (Toggled dynamically by auth.js) -->
+            <div id="farmer-specific-fields" class="d-none border-top pt-3 mt-3 border-color">
+                <h6 class="fw-bold text-success mb-3"><i class="bi bi-patch-check"></i> Farmer Credentials &amp; Farm Info</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Farm Name</label>
+                        <input type="text" class="form-control" id="farm-name" placeholder="Green Fields Farm">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Verification License No.</label>
+                        <input type="text" class="form-control" id="license-number" placeholder="LIC-FARM-98765">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Farm Address</label>
+                    <input type="text" class="form-control" id="farm-address" placeholder="Sonipat, Haryana">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-2.5 mt-3" style="font-weight: 600; border-radius: 8px;">Create Account</button>
+        </form>
+
+        <div class="alert alert-danger mt-3 d-none" id="auth-alert" style="font-size: 13px;"></div>
+
+        <div class="text-center mt-4 border-top pt-3 border-color">
+            <p class="mb-0 small text-muted">Already have an account? <a href="login.html" class="text-success fw-bold">Sign In</a></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
