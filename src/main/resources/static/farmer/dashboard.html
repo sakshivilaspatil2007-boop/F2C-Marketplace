@@ -71,6 +71,50 @@
                     </div>
                 </div>
 
+                <!-- AI Farmer Copilot Card -->
+                <div class="card p-4 shadow-sm border-color mb-4" style="background-color: var(--card-bg);">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 border-color">
+                        <div>
+                            <h5 class="fw-bold mb-0 text-success"><i class="bi bi-robot me-2"></i>AI Farmer Copilot</h5>
+                            <small class="text-muted">Your intelligent assistant for smarter farming and selling decisions.</small>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="clearCopilotChat()">
+                            <i class="bi bi-trash3 me-1"></i>Clear Chat
+                        </button>
+                    </div>
+
+                    <!-- Chat Bubble Area -->
+                    <div id="copilot-chat-messages" class="d-flex flex-column gap-3 mb-3" style="height: 300px; overflow-y: auto; background-color: rgba(0,0,0,0.01); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                        <!-- Initial Message -->
+                        <div class="d-flex gap-2 align-self-start" style="max-width: 85%;">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <div class="p-2 rounded bg-white text-dark border small shadow-sm">
+                                Hello! I am your AI Farmer Copilot. 🌾 I have access to your inventory and order sales. Ask me about stock, pricing, and revenues, or select a shortcut below!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suggested Chips -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn btn-outline-success btn-xs rounded-pill" onclick="sendCopilotSuggestion('Give me a summary of my sales.')" style="font-size: 11px; padding: 4px 10px;">📊 Sales summary</button>
+                        <button class="btn btn-outline-success btn-xs rounded-pill" onclick="sendCopilotSuggestion('What is my best-selling product?')" style="font-size: 11px; padding: 4px 10px;">🏆 Best-selling product</button>
+                        <button class="btn btn-outline-success btn-xs rounded-pill" onclick="sendCopilotSuggestion('What is the recommended price for tomatoes?')" style="font-size: 11px; padding: 4px 10px;">💰 Recommended price</button>
+                        <button class="btn btn-outline-success btn-xs rounded-pill" onclick="sendCopilotSuggestion('Which products are low in stock?')" style="font-size: 11px; padding: 4px 10px;">⚠️ Low-stock products</button>
+                        <button class="btn btn-outline-success btn-xs rounded-pill" onclick="sendCopilotSuggestion('Which products are selling slowly?')" style="font-size: 11px; padding: 4px 10px;">🐌 Slow-moving products</button>
+                        <button class="btn btn-outline-success btn-xs rounded-pill" onclick="sendCopilotSuggestion('Which products have high demand?')" style="font-size: 11px; padding: 4px 10px;">📈 High-demand products</button>
+                    </div>
+
+                    <!-- Form Input -->
+                    <form id="copilot-form" onsubmit="submitCopilotChat(event)" class="input-group">
+                        <input type="text" id="copilot-input" class="form-control" placeholder="Ask about your sales metrics, stock, or recommended prices..." required autocomplete="off" style="padding: 10px 15px;">
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-send-fill me-1"></i>Send
+                        </button>
+                    </form>
+                </div>
+
                 <!-- Customer Order Moderation Requests -->
                 <div class="card p-4 shadow-sm border-color">
                     <h5 class="fw-bold mb-3"><i class="bi bi-bag-check-fill text-success me-2"></i>Pending Order Requests</h5>
@@ -121,6 +165,7 @@
             }
 
             loadFarmerDashboard();
+            loadCopilotHistory();
         });
 
         async function loadFarmerDashboard() {
@@ -276,6 +321,134 @@
                     }
                 }
             });
+        }
+
+        async function loadCopilotHistory() {
+            try {
+                const history = await apiFetch("/api/farmer/copilot/history");
+                const chatContainer = document.getElementById("copilot-chat-messages");
+                chatContainer.innerHTML = `
+                    <div class="d-flex gap-2 align-self-start" style="max-width: 85%;">
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="p-2 rounded bg-white text-dark border small shadow-sm">
+                            Hello! I am your AI Farmer Copilot. 🌾 I have access to your inventory and order sales. Ask me about stock, pricing, and revenues, or select a shortcut below!
+                        </div>
+                    </div>
+                `;
+                
+                history.forEach(chat => {
+                    appendCopilotBubble(chat.userMessage, "user");
+                    appendCopilotBubble(chat.aiResponse, "bot");
+                });
+                scrollCopilotToBottom();
+            } catch (err) {
+                console.error("Failed to load chat history", err);
+            }
+        }
+
+        function appendCopilotBubble(text, sender) {
+            const chatContainer = document.getElementById("copilot-chat-messages");
+            const isUser = sender === "user";
+            
+            const wrapper = document.createElement("div");
+            wrapper.className = isUser ? "d-flex gap-2 align-self-end" : "d-flex gap-2 align-self-start";
+            wrapper.style.maxWidth = "85%";
+            
+            let bubbleHtml = "";
+            if (isUser) {
+                bubbleHtml = `
+                    <div class="p-2 rounded bg-success text-white small shadow-sm">
+                        ${text.replace(/\n/g, "<br>")}
+                    </div>
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                `;
+            } else {
+                bubbleHtml = `
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="p-2 rounded bg-white text-dark border small shadow-sm" style="white-space: pre-line;">
+                        ${text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}
+                    </div>
+                `;
+            }
+            
+            wrapper.innerHTML = bubbleHtml;
+            chatContainer.appendChild(wrapper);
+            scrollCopilotToBottom();
+        }
+
+        function scrollCopilotToBottom() {
+            const chatContainer = document.getElementById("copilot-chat-messages");
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function submitCopilotChat(e) {
+            if (e) e.preventDefault();
+            const input = document.getElementById("copilot-input");
+            const text = input.value.trim();
+            if (!text) return;
+            
+            input.value = "";
+            appendCopilotBubble(text, "user");
+            
+            const chatContainer = document.getElementById("copilot-chat-messages");
+            const typingIndicator = document.createElement("div");
+            typingIndicator.id = "copilot-typing-indicator";
+            typingIndicator.className = "d-flex gap-2 align-self-start";
+            typingIndicator.style.maxWidth = "85%";
+            typingIndicator.innerHTML = `
+                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="p-2 rounded bg-white text-dark border small shadow-sm">
+                    <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
+                    🤖 Copilot is thinking...
+                </div>
+            `;
+            chatContainer.appendChild(typingIndicator);
+            scrollCopilotToBottom();
+            
+            try {
+                const data = await apiFetch("/api/farmer/copilot/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+                
+                const indicator = document.getElementById("copilot-typing-indicator");
+                if (indicator) indicator.remove();
+                
+                appendCopilotBubble(data.response, "bot");
+            } catch (err) {
+                const indicator = document.getElementById("copilot-typing-indicator");
+                if (indicator) indicator.remove();
+                
+                appendCopilotBubble("Sorry, I couldn't process your request right now. Please try again.", "bot");
+            }
+        }
+
+        function sendCopilotSuggestion(val) {
+            const input = document.getElementById("copilot-input");
+            input.value = val;
+            submitCopilotChat();
+        }
+
+        async function clearCopilotChat() {
+            if (confirm("Are you sure you want to clear your chat history?")) {
+                try {
+                    await apiFetch("/api/farmer/copilot/clear", { method: "POST" });
+                    loadCopilotHistory();
+                } catch (err) {
+                    alert("Failed to clear chat history");
+                }
+            }
         }
     </script>
 </body>

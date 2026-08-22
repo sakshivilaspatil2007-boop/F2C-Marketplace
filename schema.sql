@@ -142,3 +142,14 @@ CREATE TABLE IF NOT EXISTS delivery_tracking (
     estimated_delivery_time VARCHAR(50),
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
+
+-- 13. Farmer AI Chats Table
+CREATE TABLE IF NOT EXISTS farmer_ai_chats (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    farmer_id BIGINT NOT NULL,
+    user_message TEXT NOT NULL,
+    ai_response TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (farmer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
