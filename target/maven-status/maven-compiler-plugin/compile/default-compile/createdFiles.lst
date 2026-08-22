@@ -2,6 +2,7 @@ com\f2c\marketplace\config\JwtTokenProvider.class
 com\f2c\marketplace\repository\CartItemRepository.class
 com\f2c\marketplace\dto\FarmerCopilotRequest.class
 com\f2c\marketplace\service\AiService.class
+com\f2c\marketplace\service\NotificationService.class
 com\f2c\marketplace\model\User.class
 com\f2c\marketplace\repository\FarmerRepository.class
 com\f2c\marketplace\controller\OrderController.class

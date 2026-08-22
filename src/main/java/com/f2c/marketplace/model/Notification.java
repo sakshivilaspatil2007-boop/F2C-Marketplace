@@ -21,8 +21,23 @@ public class Notification {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(nullable = false)
+    private String title;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
+
+    @Column
+    private String type; // INFO, SUCCESS, WARNING, DANGER
+
+    @Column(name = "related_entity_id")
+    private Long relatedEntityId;
+
+    @Column(name = "related_entity_type")
+    private String relatedEntityType; // ORDER, PRODUCT, USER
+
+    @Column(nullable = false)
+    private String priority = "MEDIUM"; // LOW, MEDIUM, HIGH, URGENT
 
     @Column(name = "is_read", nullable = false)
     private Boolean isRead = false;

@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "FARMER", "ADMIN")
                 .requestMatchers("/api/reviews/product/**").permitAll()
                 .requestMatchers("/api/reviews/add").hasRole("CUSTOMER")
-                .requestMatchers("/api/ai/**").hasAnyRole("CUSTOMER", "FARMER", "ADMIN")
+                .requestMatchers("/api/ai/**").permitAll()
                 .anyRequest().authenticated()
             );
 

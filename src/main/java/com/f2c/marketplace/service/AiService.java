@@ -24,6 +24,9 @@ public class AiService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private FarmerDataService farmerDataService;
+
     // AI Memory storage (Feature 19)
     private static class UserMemory {
         List<String> searches = new ArrayList<>();
@@ -55,6 +58,18 @@ public class AiService {
         for (Product p : allProductsForMemory) {
             if (msg.contains(p.getName().toLowerCase())) {
                 memory.favoriteIngredients.add(p.getName());
+            }
+        }
+
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId).orElse(null);
+        }
+
+        if (user != null && user.getRole() == Role.FARMER) {
+            String farmerResponse = handleFarmerQueries(msg, lang, userId);
+            if (farmerResponse != null) {
+                return farmerResponse;
             }
         }
 
@@ -740,5 +755,175 @@ public class AiService {
                 "    ⚠️ *Disclaimer: Suggested health tips are for informational purpose. Consult a doctor for any specific conditions.*" +
                 "  </div>" +
                 "</div>";
+    }
+
+    private String handleFarmerQueries(String msg, String lang, Long farmerId) {
+        Map<String, Object> metrics = farmerDataService.getFarmerMetrics(farmerId);
+        double totalRevenue = (double) metrics.get("totalRevenue");
+        int totalOrders = (int) metrics.get("totalOrders");
+        double totalQuantitySold = (double) metrics.get("totalQuantitySold");
+        Product bestSelling = (Product) metrics.get("bestSellingProduct");
+        List<Product> lowStock = (List<Product>) metrics.get("lowStockProducts");
+        List<Product> slowMoving = (List<Product>) metrics.get("slowMovingProducts");
+        Map<String, Double> catAvgs = (Map<String, Double>) metrics.get("categoryAvgPrices");
+        double avgVegPrice = catAvgs.getOrDefault("vegetables", 35.0);
+
+        // 1. Sales Summary / Revenue
+        if (msg.contains("summary") || msg.contains("revenue") || msg.contains("sales") || msg.contains("earnings") ||
+            msg.contains("विक्री") || msg.contains("उत्पन्न") || msg.contains("नफा") || msg.contains("हिशोब") ||
+            msg.contains("बिक्री") || msg.contains("कमाई") || msg.contains("मुनाफा") || msg.contains("हिसाब")) {
+            
+            if (lang.equals("marathi")) {
+                return String.format("📈 **तुमच्या विक्रीचा तपशील**:\n" +
+                        "• **एकूण ऑर्डर्स**: %d मिळाल्या\n" +
+                        "• **एकूण कमाई**: ₹%,.2f\n" +
+                        "• **एकूण विकलेले साहित्य**: %,.1f युनिट्स\n\n" +
+                        "💡 *सल्ला*: नवीन ताजी पिके जोडत राहा जेणेकरून ग्राहक खरेदी करत राहतील!", 
+                        totalOrders, totalRevenue, totalQuantitySold);
+            } else if (lang.equals("hindi")) {
+                return String.format("📈 **आपकी बिक्री का विवरण**:\n" +
+                        "• **कुल ऑर्डर्स**: %d मिले\n" +
+                        "• **कुल कमाई**: ₹%,.2f\n" +
+                        "• **कुल बेची गई मात्रा**: %,.1f यूनिट्स\n\n" +
+                        "💡 *सलाह*: नए ताजा उत्पाद जोड़ते रहें ताकि ग्राहक जुड़े रहें!", 
+                        totalOrders, totalRevenue, totalQuantitySold);
+            } else {
+                return String.format("📈 **Your Sales Performance Summary**:\n" +
+                        "• **Total Orders**: %d received\n" +
+                        "• **Total Revenue Earned**: ₹%,.2f\n" +
+                        "• **Total Items Sold**: %,.1f units\n\n" +
+                        "💡 *AI Advisory*: Continue listing fresh crops to drive more customer engagement and orders!",
+                        totalOrders, totalRevenue, totalQuantitySold);
+            }
+        }
+
+        // 2. Best-Selling
+        if (msg.contains("best") || msg.contains("popular") ||
+            msg.contains("उत्कृष्ट") || msg.contains("सर्वाधिक") || msg.contains("खपणारे") ||
+            msg.contains("सबसे ज्यादा") || msg.contains("लोकप्रिय")) {
+            
+            if (bestSelling == null) {
+                if (lang.equals("marathi")) {
+                    return "ℹ️ तुमच्याकडे अद्याप सर्वोत्तम विक्रीचे उत्पादन निश्चित करण्यासाठी पुरेशी विक्रीची पार्श्वभूमी नाही.";
+                } else if (lang.equals("hindi")) {
+                    return "ℹ️ आपके पास अभी तक सर्वोत्तम बिक्री का उत्पाद निर्धारित करने के लिए पर्याप्त बिक्री इतिहास नहीं है।";
+                } else {
+                    return "ℹ️ You don't have enough sales history to determine your best-selling product yet.";
+                }
+            }
+
+            if (lang.equals("marathi")) {
+                return String.format("🏆 **सर्वाधिक विकले जाणारे उत्पादन**:\n" +
+                        "• **नाव**: %s\n" +
+                        "• **एकूण विक्री**: %,.1f %s\n" +
+                        "• **एकूण महसूल**: ₹%,.2f\n\n" +
+                        "💡 *सल्ला*: बाजारात %s पिकाला चांगली मागणी आहे. याचा साठा योग्य प्रमाणात ठेवा!",
+                        bestSelling.getName(), (Double) metrics.get("bestSellingQuantity"), bestSelling.getUnit(),
+                        (Double) metrics.get("highestRevenue"), bestSelling.getName());
+            } else if (lang.equals("hindi")) {
+                return String.format("🏆 **सबसे ज्यादा बिकने वाला उत्पाद**:\n" +
+                        "• **नाम**: %s\n" +
+                        "• **कुल बिक्री**: %,.1f %s\n" +
+                        "• **कुल राजस्व**: ₹%,.2f\n\n" +
+                        "💡 *सलाह*: बाजार में %s फसल की अच्छी मांग है। इसका पर्याप्त स्टॉक बनाए रखें!",
+                        bestSelling.getName(), (Double) metrics.get("bestSellingQuantity"), bestSelling.getUnit(),
+                        (Double) metrics.get("highestRevenue"), bestSelling.getName());
+            } else {
+                return String.format("🏆 **Best-Selling Product**:\n" +
+                        "• **Product Name**: %s\n" +
+                        "• **Total Quantity Sold**: %,.1f %s\n" +
+                        "• **Revenue Generated**: ₹%,.2f\n\n" +
+                        "💡 *AI Advisory*: Your %s has been a key driver of your revenue. Ensure you maintain healthy stock levels!",
+                        bestSelling.getName(), (Double) metrics.get("bestSellingQuantity"), bestSelling.getUnit(),
+                        (Double) metrics.get("highestRevenue"), bestSelling.getName());
+            }
+        }
+
+        // 3. Recommended Price & Tomato Pricing
+        if (msg.contains("recommend") || msg.contains("price") || msg.contains("pricing") || msg.contains("tomato") ||
+            msg.contains("किंमत") || msg.contains("भाव") || msg.contains("दर") || msg.contains("टोमॅटो") || msg.contains("टमाटर") ||
+            msg.contains("कीमत") || msg.contains("दाम")) {
+            
+            if (lang.equals("marathi")) {
+                return String.format("💰 **स्मार्ट किंमत सल्ला**:\n" +
+                        "• **टोमॅटोसाठी शिफारस केलेले दर**: ₹%.2f प्रति किलो\n" +
+                        "• **सल्ला**: सध्या बाजारात भाज्यांचे सरासरी दर हे ₹%.2f प्रति किलो आहेत. आपण पिकाच्या ताजेपणा आणि गुणवत्तेनुसार ₹%.2f ते ₹%.2f दरम्यान दर ठेवून चांगला नफा मिळवू शकता.",
+                        avgVegPrice, avgVegPrice, avgVegPrice * 0.9, avgVegPrice * 1.15);
+            } else if (lang.equals("hindi")) {
+                return String.format("💰 **स्मार्ट मूल्य निर्धारण सलाह**:\n" +
+                        "• **टमाटर के लिए अनुशंसित कीमत**: ₹%.2f प्रति किलो\n" +
+                        "• **सलाह**: बाजार में वर्तमान में सब्जियों का औसत दाम ₹%.2f प्रति किलो है। आप गुणवत्ता के अनुसार ₹%.2f से ₹%.2f के बीच मूल्य तय कर सकते हैं।",
+                        avgVegPrice, avgVegPrice, avgVegPrice * 0.9, avgVegPrice * 1.15);
+            } else {
+                return String.format("💰 **Smart Pricing Advisory**:\n" +
+                        "• **Recommended Price for Tomato**: ₹%.2f per kg (current vegetable average)\n" +
+                        "• **Advisory**: If your crops are certified organic/freshly harvested, charging around ₹%.2f - ₹%.2f per kg will optimize your sales volume and margins.",
+                        avgVegPrice, avgVegPrice * 0.95, avgVegPrice * 1.15);
+            }
+        }
+
+        // 4. Low stock or slow moving
+        if (msg.contains("low") || msg.contains("stock") || msg.contains("slow") ||
+            msg.contains("साठा") || msg.contains("कमी") || msg.contains("हळू") ||
+            msg.contains("स्टॉक") || msg.contains("कम") || msg.contains("धीमा")) {
+            
+            if (lang.equals("marathi")) {
+                StringBuilder sb = new StringBuilder("⚠️ **स्टॉक आणि पिकांचा वेग**:\n");
+                if (lowStock.isEmpty()) {
+                    sb.append("• सर्व पिकांचा साठा पुरेसा आहे (किमान १० युनिट्स).\n");
+                } else {
+                    sb.append("• **कमी साठा असलेली पिके**:\n");
+                    for (Product p : lowStock) {
+                        sb.append(String.format("  - %s (%s साठा शिल्लक)\n", p.getName(), p.getQuantity()));
+                    }
+                }
+                if (!slowMoving.isEmpty()) {
+                    sb.append("• **हळू विकली जाणारी पिके** (शून्य ऑर्डर्स):\n");
+                    for (Product p : slowMoving) {
+                        sb.append(String.format("  - %s (किंमत ₹%.2f)\n", p.getName(), p.getPrice()));
+                    }
+                    sb.append("💡 *टीप*: विक्री वाढवण्यासाठी थोडे सवलत देण्याचा किंवा आकर्षक फोटो अपलोड करण्याचा प्रयत्न करा.");
+                }
+                return sb.toString();
+            } else if (lang.equals("hindi")) {
+                StringBuilder sb = new StringBuilder("⚠️ **स्टॉक और बिक्री की गति**:\n");
+                if (lowStock.isEmpty()) {
+                    sb.append("• सभी उत्पादों का स्टॉक पर्याप्त है (न्यूनतम १० यूनिट्स)।\n");
+                } else {
+                    sb.append("• **कम स्टॉक वाले उत्पाद**:\n");
+                    for (Product p : lowStock) {
+                        sb.append(String.format("  - %s (%s स्टॉक बचा है)\n", p.getName(), p.getQuantity()));
+                    }
+                }
+                if (!slowMoving.isEmpty()) {
+                    sb.append("• **धीमी गति से बिकने वाले उत्पाद** (शून्य ऑर्डर्स):\n");
+                    for (Product p : slowMoving) {
+                        sb.append(String.format("  - %s (कीमत ₹%.2f)\n", p.getName(), p.getPrice()));
+                    }
+                    sb.append("💡 *सलाह*: बिक्री बढ़ाने के लिए थोड़ी छूट देने या आकर्षक चित्र अपलोड करने का प्रयास करें।");
+                }
+                return sb.toString();
+            } else {
+                StringBuilder sb = new StringBuilder("⚠️ **Stock & Item Velocity Alerts**:\n");
+                if (lowStock.isEmpty()) {
+                    sb.append("• All your product stock levels are stable (>= 10 units).\n");
+                } else {
+                    sb.append("• **Low Stock Products**:\n");
+                    for (Product p : lowStock) {
+                        sb.append(String.format("  - %s (%s stock left)\n", p.getName(), p.getQuantity()));
+                    }
+                }
+                if (!slowMoving.isEmpty()) {
+                    sb.append("• **Slow-moving Products** (zero sales recorded):\n");
+                    for (Product p : slowMoving) {
+                        sb.append(String.format("  - %s (Price: ₹%.2f)\n", p.getName(), p.getPrice()));
+                    }
+                    sb.append("💡 *AI Advisory*: Try adjusting description details or offering a promo code to trigger first-time customer interest.");
+                }
+                return sb.toString();
+            }
+        }
+
+        return null;
     }
 }

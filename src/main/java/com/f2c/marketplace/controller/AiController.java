@@ -26,8 +26,18 @@ public class AiController {
     @PostMapping("/chat")
     public ResponseEntity<?> chat(@RequestParam String message, Authentication authentication) {
         try {
-            User user = userService.findByEmail(authentication.getName());
-            String reply = aiService.chat(message, user.getId());
+            Long userId = null;
+            if (authentication != null && authentication.isAuthenticated()) {
+                try {
+                    User user = userService.findByEmail(authentication.getName());
+                    if (user != null) {
+                        userId = user.getId();
+                    }
+                } catch (Exception e) {
+                    // Ignore, keep anonymous
+                }
+            }
+            String reply = aiService.chat(message, userId);
             return ResponseEntity.ok(new AiResponse(reply));
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());

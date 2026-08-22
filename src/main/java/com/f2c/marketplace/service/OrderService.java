@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 
 @Service
 public class OrderService {
@@ -33,6 +35,9 @@ public class OrderService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Transactional
     public Order checkout(Long userId, String shippingAddress, String paymentMethod) {
@@ -74,11 +79,6 @@ public class OrderService {
             totalAmount += product.getPrice() * cartItem.getQuantity();
             orderItems.add(orderItem);
 
-            // Notify Farmer of new order item
-            Notification farmerNotif = new Notification();
-            farmerNotif.setUser(product.getFarmer());
-            farmerNotif.setMessage("New order placed for " + cartItem.getQuantity() + " " + product.getUnit() + " of " + product.getName() + " by " + user.getName());
-            notificationRepository.save(farmerNotif);
         }
 
         order.setTotalAmount(totalAmount);
@@ -99,10 +99,33 @@ public class OrderService {
         cartItemRepository.deleteByUserId(userId);
 
         // Notify Customer
-        Notification customerNotif = new Notification();
-        customerNotif.setUser(user);
-        customerNotif.setMessage("Your order #" + savedOrder.getId() + " has been placed successfully!");
-        notificationRepository.save(customerNotif);
+        notificationService.sendNotification(
+            user,
+            "notification.order.placed.title",
+            "notification.order.placed.message",
+            "SUCCESS",
+            savedOrder.getId(),
+            "ORDER",
+            "MEDIUM"
+        );
+
+        // Notify Farmer(s)
+        Set<Long> notifiedFarmers = new HashSet<>();
+        for (OrderItem item : savedOrder.getItems()) {
+            User farmer = item.getProduct().getFarmer();
+            if (!notifiedFarmers.contains(farmer.getId())) {
+                notifiedFarmers.add(farmer.getId());
+                notificationService.sendNotification(
+                    farmer,
+                    "notification.farmer.new_order.title",
+                    "notification.farmer.new_order.message",
+                    "WARNING",
+                    savedOrder.getId(),
+                    "ORDER",
+                    "MEDIUM"
+                );
+            }
+        }
 
         return savedOrder;
     }
@@ -177,10 +200,59 @@ public class OrderService {
         }
 
         // Notify customer
-        Notification customerNotif = new Notification();
-        customerNotif.setUser(order.getUser());
-        customerNotif.setMessage("Your order #" + order.getId() + " is now: " + status);
-        notificationRepository.save(customerNotif);
+        String titleKey = "notification.order.status_update.title";
+        String msgKey = "notification.order.status_update.message";
+        String type = "INFO";
+        String priority = "MEDIUM";
+
+        if ("ACCEPTED".equalsIgnoreCase(status)) {
+            titleKey = "notification.order.confirmed.title";
+            msgKey = "notification.order.confirmed.message";
+            type = "SUCCESS";
+        } else if ("SHIPPED".equalsIgnoreCase(status)) {
+            titleKey = "notification.order.shipped.title";
+            msgKey = "notification.order.shipped.message";
+            type = "INFO";
+        } else if ("DELIVERED".equalsIgnoreCase(status)) {
+            titleKey = "notification.order.delivered.title";
+            msgKey = "notification.order.delivered.message";
+            type = "SUCCESS";
+        } else if ("CANCELLED".equalsIgnoreCase(status)) {
+            titleKey = "notification.order.cancelled.title";
+            msgKey = "notification.order.cancelled.message";
+            type = "DANGER";
+            priority = "HIGH";
+        }
+
+        notificationService.sendNotification(
+            order.getUser(),
+            titleKey,
+            msgKey,
+            type,
+            order.getId(),
+            "ORDER",
+            priority
+        );
+
+        // Notify farmer(s) on cancellation
+        if ("CANCELLED".equalsIgnoreCase(status)) {
+            Set<Long> notifiedFarmers = new HashSet<>();
+            for (OrderItem item : order.getItems()) {
+                User farmer = item.getProduct().getFarmer();
+                if (!notifiedFarmers.contains(farmer.getId())) {
+                    notifiedFarmers.add(farmer.getId());
+                    notificationService.sendNotification(
+                        farmer,
+                        "notification.farmer.order_cancelled.title",
+                        "notification.farmer.order_cancelled.message",
+                        "DANGER",
+                        order.getId(),
+                        "ORDER",
+                        "HIGH"
+                    );
+                }
+            }
+        }
 
         return orderRepository.save(order);
     }
