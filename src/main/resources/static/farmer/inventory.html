@@ -30,6 +30,7 @@
                 <ul class="sidebar-menu">
                     <li><a href="dashboard.html"><i class="bi bi-graph-up-arrow"></i>Sales Analytics</a></li>
                     <li><a href="inventory.html" class="active"><i class="bi bi-journal-bookmark-fill"></i>Manage Products</a></li>
+                    <li><a href="scanner.html"><i class="bi bi-robot"></i>AI Quality Scanner</a></li>
                 </ul>
             </div>
 
@@ -121,9 +122,30 @@
                                 </select>
                             </div>
                         </div>
+                        <!-- Hidden Quality Fields -->
+                        <input type="hidden" id="prod-quality-score">
+                        <input type="hidden" id="prod-quality-grade">
+
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Product Image URL</label>
-                            <input type="text" id="prod-img" class="form-control" placeholder="Paste Unspsh or data URL link..." required>
+                            <div class="input-group">
+                                <input type="text" id="prod-img" class="form-control" placeholder="Paste Unsplash or data URL link..." required>
+                                <button type="button" class="btn btn-outline-success" onclick="openScannerModalInInventory()"><i class="bi bi-robot"></i> Scan Image</button>
+                            </div>
+                            <!-- Hidden File Upload for Scanner -->
+                            <input type="file" id="modal-scanner-file" accept="image/*" class="d-none" onchange="runScannerFromInventory(event)">
+                            
+                            <!-- Scanner Results preview -->
+                            <div id="modal-scanner-preview-box" class="d-none mt-2 p-2 rounded bg-light border small">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold"><i class="bi bi-robot me-1 text-success"></i>Scan Result:</span>
+                                    <span id="modal-scanner-result-badge" class="badge bg-success">GOOD (87%)</span>
+                                </div>
+                                <div id="modal-scanner-result-text" class="text-muted" style="font-size:11px;">
+                                    Tomatoes quality score: 87/100
+                                </div>
+                            </div>
+                            
                             <!-- Quick Image Placeholder Helpers -->
                             <div class="mt-2 d-flex gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2" style="font-size:10px" onclick="setPlaceholderImg('tomatoes')">Tomato</button>
@@ -236,12 +258,13 @@
             } catch (e) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Failed to load inventory: ${e.message}</td></tr>`;
             }
-        }
-
-        function openAddModal() {
+             function openAddModal() {
             document.getElementById("productModalLabel").textContent = "Add Crop Product";
             document.getElementById("form-product-id").value = "";
             document.getElementById("product-form").reset();
+            document.getElementById("prod-quality-score").value = "";
+            document.getElementById("prod-quality-grade").value = "";
+            document.getElementById("modal-scanner-preview-box").classList.add("d-none");
         }
 
         async function openEditModal(productId) {
@@ -256,6 +279,18 @@
                 document.getElementById("prod-qty").value = p.quantity;
                 document.getElementById("prod-unit").value = p.unit;
                 document.getElementById("prod-img").value = p.imageUrl || "";
+                document.getElementById("prod-quality-score").value = p.qualityScore || "";
+                document.getElementById("prod-quality-grade").value = p.qualityGrade || "";
+
+                if (p.qualityScore) {
+                    const badge = document.getElementById("modal-scanner-result-badge");
+                    badge.textContent = `${p.qualityGrade} (${p.qualityScore}%)`;
+                    badge.className = "badge bg-success";
+                    document.getElementById("modal-scanner-result-text").textContent = `Quality check score: ${p.qualityScore}/100`;
+                    document.getElementById("modal-scanner-preview-box").classList.remove("d-none");
+                } else {
+                    document.getElementById("modal-scanner-preview-box").classList.add("d-none");
+                }
 
                 bsModal.show();
             } catch (e) {
@@ -274,7 +309,9 @@
                 price: parseFloat(document.getElementById("prod-price").value),
                 quantity: parseFloat(document.getElementById("prod-qty").value),
                 unit: document.getElementById("prod-unit").value,
-                imageUrl: document.getElementById("prod-img").value
+                imageUrl: document.getElementById("prod-img").value,
+                qualityScore: document.getElementById("prod-quality-score").value ? parseInt(document.getElementById("prod-quality-score").value) : null,
+                qualityGrade: document.getElementById("prod-quality-grade").value || null
             };
 
             try {
@@ -322,6 +359,73 @@
                 apple: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=500"
             };
             document.getElementById("prod-img").value = urls[type];
+        }
+
+        function openScannerModalInInventory() {
+            document.getElementById("modal-scanner-file").click();
+        }
+
+        async function runScannerFromInventory(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith("image/")) {
+                alert("Please select a valid image file.");
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Image size must be less than 5MB.");
+                return;
+            }
+
+            const previewBox = document.getElementById("modal-scanner-preview-box");
+            const badge = document.getElementById("modal-scanner-result-badge");
+            const text = document.getElementById("modal-scanner-result-text");
+
+            badge.textContent = "SCANNING...";
+            badge.className = "badge bg-secondary";
+            text.textContent = "🤖 AI is scanning your product quality...";
+            previewBox.classList.remove("d-none");
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/api/quality-scanner/analyze", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${getAuthToken() || ""}`
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                const data = await response.json();
+                
+                // Store results in hidden inputs
+                document.getElementById("prod-quality-score").value = data.qualityScore;
+                document.getElementById("prod-quality-grade").value = data.qualityGrade;
+
+                // Update badge and text
+                badge.textContent = `${data.qualityGrade} (${data.qualityScore}%)`;
+                badge.className = "badge bg-success";
+                text.textContent = `Grade: ${data.qualityGrade} | Score: ${data.qualityScore}/100. Recommendation: ${data.recommendation}`;
+
+                // Auto fill the Image URL as a data URL
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById("prod-img").value = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+
+            } catch (err) {
+                badge.textContent = "FAILED";
+                badge.className = "badge bg-danger";
+                text.textContent = err.message || "Failed to scan product.";
+            }
         }
     </script>
 </body>

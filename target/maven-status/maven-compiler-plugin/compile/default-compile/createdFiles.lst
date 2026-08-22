@@ -22,7 +22,9 @@ com\f2c\marketplace\model\Farmer.class
 com\f2c\marketplace\repository\UserRepository.class
 com\f2c\marketplace\model\Role.class
 com\f2c\marketplace\controller\ProductController.class
+com\f2c\marketplace\service\ProductQualityScannerService.class
 com\f2c\marketplace\dto\AuthResponse.class
+com\f2c\marketplace\repository\ProductQualityScanRepository.class
 com\f2c\marketplace\model\Notification.class
 com\f2c\marketplace\repository\CategoryRepository.class
 com\f2c\marketplace\repository\DeliveryTrackingRepository.class
@@ -45,9 +47,11 @@ com\f2c\marketplace\repository\NotificationRepository.class
 com\f2c\marketplace\model\Review.class
 com\f2c\marketplace\service\FarmerDataService.class
 com\f2c\marketplace\service\AiService$UserMemory.class
+com\f2c\marketplace\controller\ProductQualityScannerController.class
 com\f2c\marketplace\controller\FarmerCopilotController.class
 com\f2c\marketplace\controller\AdminController.class
 com\f2c\marketplace\repository\OrderRepository.class
+com\f2c\marketplace\model\ProductQualityScan.class
 com\f2c\marketplace\service\FarmerCopilotService.class
 com\f2c\marketplace\repository\OrderItemRepository.class
 com\f2c\marketplace\repository\ReviewRepository.class

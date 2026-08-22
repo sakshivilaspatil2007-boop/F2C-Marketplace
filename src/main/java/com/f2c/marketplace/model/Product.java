@@ -43,6 +43,12 @@ public class Product {
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
+    @Column(name = "quality_score")
+    private Integer qualityScore;
+
+    @Column(name = "quality_grade")
+    private String qualityGrade;
+
     @Column(nullable = false)
     private String status = "ACTIVE"; // ACTIVE, MODERATED
 

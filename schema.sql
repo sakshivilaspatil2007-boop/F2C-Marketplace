@@ -158,3 +158,22 @@ CREATE TABLE IF NOT EXISTS farmer_ai_chats (
     FOREIGN KEY (farmer_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- 14. Product Quality Scans Table
+CREATE TABLE IF NOT EXISTS product_quality_scans (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NULL,
+    image_url TEXT NULL,
+    product_type VARCHAR(50) NOT NULL,
+    quality_score INT NOT NULL,
+    quality_grade VARCHAR(20) NOT NULL,
+    freshness VARCHAR(20) NOT NULL,
+    visible_defects TEXT NULL,
+    recommendation TEXT NULL,
+    scanned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+);
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS quality_score INT NULL;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS quality_grade VARCHAR(20) NULL;
+
+
